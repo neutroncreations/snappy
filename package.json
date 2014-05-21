@@ -1,0 +1,13 @@
+{
+  "name": "webscreenshot",
+  "description": "webscreenshot",
+  "version": "0.0.1",
+  "dependencies": {
+    "node-simple-router": "*",
+    "node-phantom": "*"
+  },
+	"engines": {
+	  "node": "0.10.x",
+	  "npm": "1.2.x"
+	}
+}
