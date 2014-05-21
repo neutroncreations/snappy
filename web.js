@@ -7,27 +7,55 @@ var router = Router();
 
 router.get("/", function(request, response) {
 
+  var headers = {
+    'Content-type': 'image/png'
+  };
+
+  if (request.get.download) {
+    headers['Content-Disposition'] = 'attachment; filename="image.png"';
+  }
+
   phantom.create(function (err,ph) {
     ph.createPage(function (err,page) {
-      page.customHeaders = {'Referer': request.get.url};
-      page.set('settings.userAgent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.1995.2 Safari/537.36');
-      page.setViewport({ width: request.get.width || 1024, height: 768 }, function(err){
-        page.open(request.get.url, function (err, status) {
-          console.log("Started rendering: ", request.get.url);
+      page.set('settings.customHeaders', {'Referer': request.get.url}, function(err) {
+        page.set('settings.userAgent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.1995.2 Safari/537.36', function(err) {
+          page.setViewport({ width: request.get.width || 1024, height: 768 }, function(err){
+            var resourceCount = 0;
+            var timeout;
 
-          setTimeout(function(){
-            page.renderBase64('png', function(err, imagedata){
+            page.onResourceRequested = function (ev) {
+              resourceCount++;
+              clearTimeout(timeout);
+              console.log('request', resourceCount);
+            }
 
-              response.writeHead(200, {
-                'Content-type': 'image/png'
-              });
-              response.end(new Buffer(imagedata, 'base64'));
+            page.onResourceReceived = function (ev) {
+              if (ev.stage == 'end') {
+                resourceCount--;
+                console.log('receive', resourceCount);
+                if (resourceCount <= 0) {
 
-              console.log("Finished rendering: ", request.get.url);
+                  timeout = setTimeout(function() {
+                    console.log('Rasterising...')
+                    page.renderBase64('png', function(err, imagedata){
 
-              ph.exit();
+                      response.writeHead(200, headers);
+                      response.end(new Buffer(imagedata, 'base64'));
+
+                      console.log("Finished rendering: ", request.get.url);
+
+                      ph.exit();
+                    });
+                  }, 1000);
+                }
+              }
+            };
+
+            console.log("Started rendering: ", request.get.url);
+            page.open(request.get.url, function (err, status) {
+              // handler error here
             });
-          }, 2000);
+          });
         });
       });
     });
