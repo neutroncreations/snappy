@@ -26,15 +26,16 @@ router.get("/", function(request, response) {
             page.onResourceRequested = function (ev) {
               resourceCount++;
               clearTimeout(timeout);
-              console.log('request', resourceCount);
+              // console.log('request', resourceCount);
             }
 
             page.onResourceReceived = function (ev) {
               if (ev.stage == 'end') {
                 resourceCount--;
-                console.log('receive', resourceCount);
+                // console.log('receive', resourceCount);
                 if (resourceCount <= 0) {
 
+                  clearTimeout(timeout);
                   timeout = setTimeout(function() {
                     console.log('Rasterising...')
                     page.renderBase64('png', function(err, imagedata){
