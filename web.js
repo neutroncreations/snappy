@@ -40,7 +40,6 @@ router.get("/", function(request, response) {
                     console.log('Rasterising...')
                     page.renderBase64('png', function(err, imagedata){
 
-                      response.writeHead(200, headers);
                       response.end(new Buffer(imagedata, 'base64'));
 
                       console.log("Finished rendering: ", request.get.url);
@@ -55,6 +54,7 @@ router.get("/", function(request, response) {
             console.log("Started rendering: ", request.get.url);
             page.open(request.get.url, function (err, status) {
               // handler error here
+              response.writeHead(200, headers);
             });
           });
         });
